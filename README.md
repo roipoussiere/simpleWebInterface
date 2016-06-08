@@ -12,35 +12,39 @@ Basic usage:
 #!/usr/bin/python3
 # -*- coding: utf-8 -*
 
-from simpleWebInterface import serve
+from simpleWebInterface import Fieldset, Form
 
 # We describe the fieldsets and inputs of our form.
-form = [
-	{'legend':'Your informations',
-	'inputs':[
-		{'name':'name',  'label':'Your name', 'type':'text',     'tooltip':'Just enter your name.',     'placeholder':'Jean Martin',  'required':True},
-		{'name':'age',                        'type':'number',   'tooltip':'How old are you',           'placeholder':'22',           'required':False}, # No label: default=name.title()
-		{'name':'bio',   'label':'Biography', 'type':'textarea', 'tooltip':'What about you?',           'placeholder':'I am a chair collector.'} # No required: default=False
-	]},
-	{'legend':'Your object',
-	'inputs':[
-		{'name':'title',                                         'tooltip':'What do you want to sell?', 'placeholder':'A blue chair', 'required':True}, # No type: default=text
-		{'name':'price',                      'type':'number',                                          'placeholder':'50',           'required':True}, # No tooltip: default=None
-		{'name':'description',                'type':'textarea', 'tooltip':'Describe here the object'} # No placeholder: default=''
-	]}]
+infos = Fieldset('Your informations')
+infos.add(name='Your name', type='text', hint='Only letters, between 3 and 20 chars. Ex: “Roger”', placeholder='Enter your name.', required=True, pattern='[A-Za-z]{3,20}')
+infos.add(name='Age', type='number', hint='Enter a number. Ex: “42”', placeholder='How old are you?', required=False) # No id
+infos.add(name='Biography', type='textarea', hint='All characters are autorized. Ex: “I am a chair collector.”', placeholder='What about you?') # No required: default=False
 
-# We define our callback function, wich is called when the user clicks to the Send button.
-# handler: The BaseHTTPRequestHandler if you want to deal with it (ie. handler.wfile.write('something'))
-# values: Our form, filled with the values set by the user.
-# Return: the content eventually displayed on the web page when the user validate the form.
-def callback(handler, values):
-	'This function is called when the user click on the Send button.'
-	name = values['name'].value
+product = Fieldset('Your product')
+product.add(name='Title', hint='All characters are autorized. Ex: “A blue chair.”', placeholder='What do you want to sell?', required=True), # No type: default=text
+product.add(name='Price', type='number', unit='€', hint='Enter a number. Ex: “15”', required=True), # No placeholder: default=''
+product.add(name='Description', type='textarea') # No hint: default='All characters are autorized.'
+
+# We define how to do when the user update the form.
+def on_update(key, value):
+	"""This function is called each time the user update an input in the form (focus out).
+	key: the id of the update input fieldset
+	value: the content of the updated input field."""
+
+	print('updated %s: %s' % (key, value))
+
+# We define how to do when the user validate the form.
+def on_valid(parameters):
+	"""This function is called when tu user click on the Send button.
+	parameters: A dictionnary containing all parameters.
+	return: An information message eventually displayed instead of the form."""
+
 	response = 'Hello %s, so you want to sell %s for $%s?' \
-		% (values['name'].value, values['title'].value, values['price'].value)
+		% (parameters['your_name'], parameters['title'], parameters['price'])
 	print(response)
 	return response
 
 # Then we serve our form!
-serve('A simple form with some parameters', form, 'Process parameters', callback)
+form = Form([infos, product], on_update, on_valid, 'A wanderful web form')
+
 ```
